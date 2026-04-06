@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Semi Surprise 🗺️</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --brown: #3D2B1F;
+    --gold: #C9A84C;
+    --sage: #7A9E7E;
+    --terracotta: #C4622D;
+    --mist: #E8E4DC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--brown); min-height: 100vh; overflow-x: hidden; }
+  .screen { display: none; min-height: 100vh; padding: 2rem 1.5rem; flex-direction: column; align-items: center; justify-content: center; text-align: center; animation: fadeIn 0.5s ease; }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes reveal { 0% { clip-path: circle(0% at 50% 50%); opacity: 0; } 100% { clip-path: circle(100% at 50% 50%); opacity: 1; } }
+  @keyframes confettiFall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes barGrow { from { width: 0%; } to { width: 100%; } }
+  @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+
+  .emoji-float { font-size: 64px; animation: float 3s ease-in-out infinite; margin-bottom: 1.5rem; display: block; }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.7rem, 5.5vw, 2.6rem); line-height: 1.25; margin-bottom: 1rem; color: var(--brown); }
+  h1 em { font-style: italic; color: var(--terracotta); }
+  p { font-size: clamp(0.92rem, 3vw, 1.05rem); line-height: 1.75; color: #5C4A3A; max-width: 340px; margin: 0 auto 1.25rem; }
+
+  .btn { display: inline-block; padding: 14px 32px; border-radius: 100px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 500; cursor: pointer; border: none; transition: transform 0.15s, box-shadow 0.15s; }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--brown); color: var(--cream); box-shadow: 0 4px 20px rgba(61,43,31,0.25); }
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(61,43,31,0.35); transform: translateY(-2px); }
+  .btn-gold { background: var(--gold); color: #fff; box-shadow: 0 4px 20px rgba(201,168,76,0.4); }
+  .btn-gold:hover { box-shadow: 0 6px 28px rgba(201,168,76,0.5); transform: translateY(-2px); }
+
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 380px; margin: 1rem auto; }
+  .choice-col { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; margin: 1rem auto; }
+
+  .choice-card { background: white; border: 1.5px solid var(--mist); border-radius: 20px; padding: 18px 12px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .choice-row { background: white; border: 1.5px solid var(--mist); border-radius: 16px; padding: 14px 18px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 14px; text-align: left; }
+  .choice-card:hover, .choice-card:active { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.2); }
+  .choice-row:hover, .choice-row:active { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,168,76,0.2); }
+  .choice-card.selected { border-color: var(--sage); background: #F4FAF5; }
+  .choice-row.selected { border-color: var(--sage); background: #F4FAF5; }
+
+  .icon { font-size: 32px; flex-shrink: 0; }
+  .label { font-family: 'Playfair Display', serif; font-size: 0.9rem; font-weight: 700; color: var(--brown); }
+  .sublabel { font-size: 0.74rem; color: #8A7A6A; line-height: 1.35; }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0.5rem 0 1.5rem; }
+  .tag { padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 500; }
+  .tag-sage { background: #E8F0E9; color: #3D6B42; }
+  .tag-gold { background: #FBF3E0; color: #8A6A10; }
+  .tag-terra { background: #FAE8DF; color: #8A3510; }
+
+  .reveal-box { background: white; border-radius: 24px; padding: 2rem 1.5rem; max-width: 360px; width: 100%; box-shadow: 0 12px 48px rgba(61,43,31,0.12); animation: reveal 0.9s ease forwards; margin-bottom: 1.5rem; }
+  .destination-name { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 700; color: var(--terracotta); margin: 0.5rem 0; animation: popIn 0.6s ease 0.8s both; }
+  .destination-sub { font-size: 0.9rem; color: #8A7A6A; margin-bottom: 1.2rem; }
+  .highlight-list { text-align: left; list-style: none; }
+  .highlight-list li { font-size: 0.9rem; color: #5C4A3A; padding: 5px 0; border-bottom: 1px solid var(--mist); display: flex; align-items: center; gap: 8px; max-width: none; margin: 0; }
+  .highlight-list li:last-child { border-bottom: none; }
+  .budget-badge { display: inline-block; background: var(--sage); color: white; font-size: 0.8rem; font-weight: 500; padding: 4px 14px; border-radius: 100px; margin-bottom: 1rem; }
+
+  .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+  .confetti-piece { position: absolute; top: -20px; border-radius: 2px; animation: confettiFall linear forwards; }
+
+  .deco { width: 60px; height: 2px; background: var(--gold); margin: 0.75rem auto; border-radius: 2px; }
+  .small-note { font-size: 0.78rem; color: #A09080; margin-top: 0.5rem; }
+
+  .progress { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.5rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mist); transition: background 0.3s; }
+  .dot.on { background: var(--gold); }
+  .dot.done { background: var(--sage); }
+
+  /* Computing screen */
+  .computing-wrap { width: 100%; max-width: 320px; margin: 1.5rem auto; }
+  .compute-line { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #8A7A6A; padding: 6px 0; }
+  .compute-bar-track { flex: 1; height: 4px; background: var(--mist); border-radius: 2px; margin: 0 10px; overflow: hidden; }
+  .compute-bar-fill { height: 100%; background: var(--sage); border-radius: 2px; width: 0%; }
+  .compute-check { color: var(--sage); font-size: 1rem; opacity: 0; transition: opacity 0.3s; }
+  .computing-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--brown); margin-bottom: 0.5rem; animation: pulse 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div class="confetti-container" id="confetti"></div>
+
+<!-- S1: Intro -->
+<div class="screen active" id="s1">
+  <span class="emoji-float">🗺️</span>
+  <h1>I have a<br><em>semi surprise</em></h1>
+  <div class="deco"></div>
+  <p>Need a little help planning something for our very first trip together as married people.</p>
+  <p>But first... I need you to help pick where we go.</p>
+  <button class="btn btn-primary" onclick="go('s2')">Okay I'm curious 👀</button>
+</div>
+
+<!-- S2: Setup -->
+<div class="screen" id="s2">
+  <span class="emoji-float">✈️</span>
+  <h1>June 17–24, 2026</h1>
+  <div class="deco"></div>
+  <p>I've done all the research — flights, hotels, activities, the whole thing.</p>
+  <p>All you have to do is answer a few questions and we'll figure out where we're headed.</p>
+  <button class="btn btn-gold" onclick="go('s3')">Let's figure it out 🌿</button>
+</div>
+
+<!-- S3: Q1 Weather -->
+<div class="screen" id="s3">
+  <div class="progress"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  <h1>Ideal weather<br><em>for a trip?</em></h1>
+  <div class="deco"></div>
+  <p>Be honest.</p>
+  <div class="choice-grid">
+    <div class="choice-card" onclick="pick(this, 's4')">
+      <div class="icon">⛅</div>
+      <div class="label">Cool & breezy</div>
+      <div class="sublabel">75°F, mountain air, light jacket weather</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's4')">
+      <div class="icon">🌴</div>
+      <div class="label">Hot & humid</div>
+      <div class="sublabel">90°F, sun all day, beach vibes</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's4')">
+      <div class="icon">🌤️</div>
+      <div class="label">Warm & sunny</div>
+      <div class="sublabel">80°F, clear skies, comfortable</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's4')">
+      <div class="icon">🌧️</div>
+      <div class="label">Cozy & overcast</div>
+      <div class="sublabel">Grey skies, sweaters, coffee weather</div>
+    </div>
+  </div>
+  <p class="small-note">Question 1 of 4</p>
+</div>
+
+<!-- S4: Q2 Activity -->
+<div class="screen" id="s4">
+  <div class="progress"><div class="dot done"></div><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+  <h1>What sounds more<br><em>fun to you?</em></h1>
+  <div class="deco"></div>
+  <div class="choice-col">
+    <div class="choice-row" onclick="pick(this, 's5')">
+      <div class="icon">🥾</div>
+      <div><div class="label">Hiking & waterfalls</div><div class="sublabel">Trails, mountain views, fresh air</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's5')">
+      <div class="icon">🎨</div>
+      <div><div class="label">Art & local culture</div><div class="sublabel">Galleries, studios, artisan markets</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's5')">
+      <div class="icon">🏛️</div>
+      <div><div class="label">History & architecture</div><div class="sublabel">Grand estates, museums, old buildings</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's5')">
+      <div class="icon">🍽️</div>
+      <div><div class="label">Eating our way through a city</div><div class="sublabel">Restaurant hopping, local spots, food markets</div></div>
+    </div>
+  </div>
+  <p class="small-note">Question 2 of 4</p>
+</div>
+
+<!-- S5: Q3 Food -->
+<div class="screen" id="s5">
+  <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot on"></div><div class="dot"></div></div>
+  <h1>Pick your ideal<br><em>food scene</em></h1>
+  <div class="deco"></div>
+  <div class="choice-grid">
+    <div class="choice-card" onclick="pick(this, 's6')">
+      <div class="icon">🧀</div>
+      <div class="label">Farm to table</div>
+      <div class="sublabel">Local sourcing, creative menus</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's6')">
+      <div class="icon">🍜</div>
+      <div class="label">International & diverse</div>
+      <div class="sublabel">Global cuisines, something for everyone</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's6')">
+      <div class="icon">🦐</div>
+      <div class="label">Classic Southern</div>
+      <div class="sublabel">Comfort food, local staples</div>
+    </div>
+    <div class="choice-card" onclick="pick(this, 's6')">
+      <div class="icon">🍺</div>
+      <div class="label">Craft brewery scene</div>
+      <div class="sublabel">Local brews, taprooms, chill vibes</div>
+    </div>
+  </div>
+  <p class="small-note">Question 3 of 4</p>
+</div>
+
+<!-- S6: Q4 Dream day -->
+<div class="screen" id="s6">
+  <div class="progress"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot on"></div></div>
+  <h1>What's the<br><em>dream day</em> look like?</h1>
+  <div class="deco"></div>
+  <div class="choice-col">
+    <div class="choice-row" onclick="pick(this, 's-computing')">
+      <div class="icon">🌄</div>
+      <div><div class="label">Hike somewhere with insane views</div><div class="sublabel">360° panoramas, earn the scenery</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's-computing')">
+      <div class="icon">🏛️</div>
+      <div><div class="label">Explore a historic estate all day</div><div class="sublabel">Grand architecture, gardens, a little wine</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's-computing')">
+      <div class="icon">🏖️</div>
+      <div><div class="label">Beach, sun, do absolutely nothing</div><div class="sublabel">Sand, waves, nap on a towel all day</div></div>
+    </div>
+    <div class="choice-row" onclick="pick(this, 's-computing')">
+      <div class="icon">🌆</div>
+      <div><div class="label">Wander a city with no real plan</div><div class="sublabel">Find hidden spots, follow curiosity</div></div>
+    </div>
+  </div>
+  <p class="small-note">Question 4 of 4</p>
+</div>
+
+<!-- Computing screen -->
+<div class="screen" id="s-computing">
+  <span style="font-size:52px;margin-bottom:1.5rem;display:block;">🧭</span>
+  <p class="computing-title">Analyzing your answers...</p>
+  <div class="deco"></div>
+  <div class="computing-wrap">
+    <div class="compute-line">
+      <span>Weather preference</span>
+      <div class="compute-bar-track"><div class="compute-bar-fill" id="bar1"></div></div>
+      <span class="compute-check" id="chk1">✓</span>
+    </div>
+    <div class="compute-line">
+      <span>Activity match</span>
+      <div class="compute-bar-track"><div class="compute-bar-fill" id="bar2"></div></div>
+      <span class="compute-check" id="chk2">✓</span>
+    </div>
+    <div class="compute-line">
+      <span>Food scene fit</span>
+      <div class="compute-bar-track"><div class="compute-bar-fill" id="bar3"></div></div>
+      <span class="compute-check" id="chk3">✓</span>
+    </div>
+    <div class="compute-line">
+      <span>Dream day score</span>
+      <div class="compute-bar-track"><div class="compute-bar-fill" id="bar4"></div></div>
+      <span class="compute-check" id="chk4">✓</span>
+    </div>
+  </div>
+  <p id="computing-status" style="font-size:0.85rem; color:#8A7A6A; margin-top:0.5rem;"></p>
+</div>
+
+<!-- Reveal: Always Asheville -->
+<div class="screen" id="s-result">
+  <span style="font-size:52px;margin-bottom:1rem;display:block;">🏔️</span>
+  <h1>Based on your answers,<br>you're going to <em>Asheville!</em></h1>
+  <div class="deco"></div>
+  <div class="reveal-box">
+    <div class="destination-name">Asheville, NC</div>
+    <div class="destination-sub">Blue Ridge Mountains · Jun 17–24, 2026</div>
+    <div class="budget-badge">✓ All planned, all sorted</div>
+    <ul class="highlight-list">
+      <li>🏛️ Full day at the Biltmore Estate</li>
+      <li>🌄 Blue Ridge Parkway scenic drive</li>
+      <li>💦 Waterfall hikes at DuPont Forest</li>
+      <li>🎨 River Arts District & local culture</li>
+      <li>🍽️ Great restaurants every single day</li>
+      <li>🏨 Hotel with free breakfast & free parking</li>
+    </ul>
+  </div>
+  <div class="tag-row">
+    <span class="tag tag-sage">Nature & Adventure</span>
+    <span class="tag tag-gold">Mountain Views</span>
+    <span class="tag tag-terra">Just Us</span>
+  </div>
+  <button class="btn btn-primary" onclick="go('s-final')">Can't wait! 🥹</button>
+</div>
+
+<!-- Final -->
+<div class="screen" id="s-final">
+  <span class="emoji-float">💍</span>
+  <h1>Our first adventure<br>as <em>married people</em></h1>
+  <div class="deco"></div>
+  <p>June 17th can't come soon enough.</p>
+  <p>No work, no stress — just good food, good views, and even better company.</p>
+  <div class="tag-row">
+    <span class="tag tag-gold">Jun 17–24, 2026</span>
+    <span class="tag tag-sage">Asheville, NC</span>
+    <span class="tag tag-terra">Us 🤍</span>
+  </div>
+  <p class="small-note">Made with way too much research 😅</p>
+</div>
+
+<script>
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function pick(card, next) {
+  card.classList.add('selected');
+  setTimeout(() => {
+    if (next === 's-computing') {
+      go('s-computing');
+      runComputing();
+    } else {
+      go(next);
+    }
+  }, 280);
+}
+
+function animateBar(id, checkId, duration, delay, cb) {
+  const bar = document.getElementById(id);
+  const chk = document.getElementById(checkId);
+  setTimeout(() => {
+    bar.style.transition = `width ${duration}ms ease`;
+    bar.style.width = '100%';
+    setTimeout(() => {
+      chk.style.opacity = '1';
+      if (cb) cb();
+    }, duration);
+  }, delay);
+}
+
+function runComputing() {
+  const statuses = [
+    'Checking weather compatibility...',
+    'Matching activity preferences...',
+    'Scoring food scene alignment...',
+    'Calculating overall vibe...',
+    'Almost there...'
+  ];
+  let i = 0;
+  const statusEl = document.getElementById('computing-status');
+  statusEl.textContent = statuses[0];
+  const interval = setInterval(() => {
+    i++;
+    if (i < statuses.length) statusEl.textContent = statuses[i];
+    else clearInterval(interval);
+  }, 700);
+
+  animateBar('bar1', 'chk1', 600, 200, () => {
+    animateBar('bar2', 'chk2', 700, 100, () => {
+      animateBar('bar3', 'chk3', 500, 100, () => {
+        animateBar('bar4', 'chk4', 800, 100, () => {
+          setTimeout(() => {
+            statusEl.textContent = '✓ Match found!';
+            setTimeout(() => {
+              launchConfetti();
+              go('s-result');
+            }, 700);
+          }, 300);
+        });
+      });
+    });
+  });
+}
+
+function launchConfetti() {
+  const container = document.getElementById('confetti');
+  container.innerHTML = '';
+  const colors = ['#C9A84C', '#7A9E7E', '#C4622D', '#3D2B1F', '#E8E4DC'];
+  for (let i = 0; i < 80; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    p.style.animationDelay = (Math.random() * 0.6) + 's';
+    const size = Math.random() * 8 + 6;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    container.appendChild(p);
+    setTimeout(() => p.remove(), 4500);
+  }
+}
+</script>
+</body>
+</html>
